@@ -11,7 +11,10 @@ const ContactForm = () => {
   });
   const [status, setStatus] = useState({ type: "", message: "" });
 
-  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL?.trim();
+  const submitFormUrl = apiBaseUrl
+    ? `${apiBaseUrl.replace(/\/$/, "")}/submit-form`
+    : "/submit-form";
 
   // Lesson 9: Step 2 – Post the collected form data to the Express endpoint we
   // configured in server/index.js, and Step 3 – provide clear success or error
@@ -20,7 +23,7 @@ const ContactForm = () => {
     event.preventDefault();
     setStatus({ type: "", message: "" });
 
-    fetch(`${apiBaseUrl}/submit-form`, {
+    fetch(submitFormUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(formData),
