@@ -8,7 +8,7 @@ const Featured = () => {
         <h1> Gallery </h1>
       </div>
       <div id="card-container">
-      <div class="featured-card">
+        <div className="featured-card">
           <img
             className="img"
             src={productImg}
@@ -17,7 +17,7 @@ const Featured = () => {
           <h3>Add a product here</h3>
         </div>
 
-        <div class="featured-card">
+        <div className="featured-card">
           <img
             className="img"
             src={productImg}
@@ -26,7 +26,7 @@ const Featured = () => {
           <h3>Add a product here</h3>
         </div>
 
-        <div class="featured-card">
+        <div className="featured-card">
           <img
             className="img"
             src={productImg}
@@ -35,7 +35,7 @@ const Featured = () => {
           <h3>Add a product here</h3>
         </div>
 
-        <div class="featured-card">
+        <div className="featured-card">
           <img
             className="img"
             src={productImg}
@@ -44,7 +44,7 @@ const Featured = () => {
           <h3>Add a product here</h3>
         </div>
 
-        <div class="featured-card">
+        <div className="featured-card">
           <img
             className="img"
             src={productImg}
