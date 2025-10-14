@@ -44,9 +44,15 @@ npm run dev
 ## Environment Variables
 Create a `.env` file in the `server/` directory to store secrets such as:
 ```env
-DATABASE_URL=mysql://user:password@localhost:3306/lesson9
 PORT=4000
+MYSQL_HOST=127.0.0.1
+MYSQL_PORT=3306
+MYSQL_USER=root
+MYSQL_PASSWORD=super-secret
+MYSQL_DATABASE=ecommerce
 ```
+- The Express server reads these variables to build the MySQL connection pool. 
+  Point `MYSQL_HOST` at a database that is reachable from the Codespace or local Node process (for example, an IP/DNS record for your workstation or a managed database instance). If you are connecting to MySQL running on your host machine, make sure remote connections are enabled and that port **3306** is open in your firewall.
 - Never commit `.env` files; ensure they are listed in `.gitignore`.
 - If the React app needs public environment variables, add them to `client/.env` with the `REACT_APP_` prefix (for example, `REACT_APP_API_BASE_URL=http://localhost:4000`).
 
