@@ -1,11 +1,11 @@
 import React from "react";
-import ContactForm from "../components/contactForm"
+import ContactForm from "../components/contactForm";
 
 const Contact = () => {
   return (
     <div id="contact-page">
       <ContactForm />
-      {/* TODO: Wire this form to the Lesson 9 backend once it is running. */}
+      {/* Lesson 9: The ContactForm now posts to the Express backend created in this lesson. */}
     </div>
   );
 };
