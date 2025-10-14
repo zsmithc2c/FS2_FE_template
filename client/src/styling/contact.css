@@ -29,7 +29,7 @@ textarea {
   resize: vertical;
 }
 
-input[type="submit"] {
+button[type="submit"] {
   background-color: rgb(0, 92, 122);
   color: white;
   padding: 12px 20px;
@@ -38,6 +38,20 @@ input[type="submit"] {
   cursor: pointer;
 }
 
-input[type="submit"]:hover {
+button[type="submit"]:hover {
   background-color: #000b70;
+}
+
+/* Lesson 9: Display a simple status message below the form to confirm database submissions. */
+.form-status {
+  margin-top: 12px;
+  font-weight: 600;
+}
+
+.form-status.success {
+  color: #0c7a0c;
+}
+
+.form-status.error {
+  color: #b00020;
 }

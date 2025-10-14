@@ -10,17 +10,33 @@ app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// TODO: Configure mysql.createPool with your schema credentials from Lesson 9.
+// Lesson 9: Create the reusable MySQL connection pool with the local credentials
+// students set up in MySQL Workbench for the ecommerce schema.
 const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
+  host: "localhost",
+  user: "root",
+  password: "password",
+  database: "ecommerce",
 });
 
 app.post('/submit-form', (req, res) => {
-  // TODO: Finish the Lesson 9 /submit-form implementation using your database pool.
-  res.status(501).json({ message: 'Not implemented yet' });
+  // Lesson 9: Read the form fields sent by the React contact form so we can
+  // insert them into the contact table that was created earlier in the lesson.
+  const { firstname, lastname, email, subject } = req.body;
+
+  const sqlInsert =
+    'INSERT INTO contact (First_name, Last_name, Email, message) VALUES (?, ?, ?, ?)';
+
+  db.query(sqlInsert, [firstname, lastname, email, subject], (error, result) => {
+    if (error) {
+      console.error('Error inserting contact form submission:', error);
+      return res
+        .status(500)
+        .json({ message: 'There was a problem saving your message. Please try again.' });
+    }
+
+    return res.status(201).json({ message: 'Thanks for reaching out!', id: result.insertId });
+  });
 });
 
 app.listen(PORT, () => {

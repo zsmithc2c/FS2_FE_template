@@ -1,29 +1,45 @@
 import React, { useState } from "react";
-import axios from "axios";
 
 const ContactForm = () => {
-  // Lesson 9 TODO: Step 1 – Collect the form data in component state so it can be sent to your server.
+  // Lesson 9: Step 1 – Store each contact field in state so the values can be
+  // packaged and sent to the Express API when the form is submitted.
   const [formData, setFormData] = useState({
     firstname: "",
     lastname: "",
     email: "",
     subject: "",
   });
+  const [status, setStatus] = useState({ type: "", message: "" });
 
-  // Lesson 9 TODO: Step 2 – Send this data to your Express endpoint once it's implemented.
-  // Lesson 9 TODO: Step 3 – Handle both success and failure responses from the server.
+  const apiBaseUrl = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
+
+  // Lesson 9: Step 2 – Post the collected form data to the Express endpoint we
+  // configured in server/index.js, and Step 3 – provide clear success or error
+  // feedback to the learner based on the server response.
   const handleSubmit = (event) => {
     event.preventDefault();
-    axios
-      // Reminder: set REACT_APP_API_BASE_URL in your .env once your Express server is up.
-      .post(`${process.env.REACT_APP_API_BASE_URL}/submit-form`, formData)
-      .then((response) => {
-        console.log(response.data);
-        // TODO: replace this console.log with user feedback once the POST route is working.
+    setStatus({ type: "", message: "" });
+
+    fetch(`${apiBaseUrl}/submit-form`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(formData),
+    })
+      .then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.message || "Unexpected response from the server.");
+        }
+
+        setStatus({ type: "success", message: data.message });
+        setFormData({ firstname: "", lastname: "", email: "", subject: "" });
       })
       .catch((error) => {
-        console.log(error);
-        // TODO: surface an error message to the user once the POST route is working.
+        console.error(error);
+        setStatus({
+          type: "error",
+          message: error.message || "We were unable to send your message. Please try again.",
+        });
       });
   };
 
@@ -58,7 +74,9 @@ const ContactForm = () => {
         />
 
         <label htmlFor="email">Email Address</label>
-        <textarea
+        <input
+          type="email"
+          className="name"
           id="email"
           name="email"
           placeholder="Please leave an email address where we can reach you"
@@ -76,6 +94,9 @@ const ContactForm = () => {
         />
 
         <button type="submit">Submit</button>
+        {status.message && (
+          <p className={`form-status ${status.type}`}>{status.message}</p>
+        )}
       </form>
     </div>
   );
