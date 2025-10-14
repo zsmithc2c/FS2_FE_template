@@ -2,6 +2,31 @@ const express = require('express');
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
+const fs = require('fs');
+const path = require('path');
+
+// Load environment variables defined in server/.env so the MySQL connection
+// configuration can be controlled without exporting variables globally.
+const envPath = path.join(__dirname, '.env');
+if (fs.existsSync(envPath)) {
+  fs.readFileSync(envPath, 'utf8')
+    .split(/\r?\n/)
+    .filter((line) => line.trim() && !line.trim().startsWith('#'))
+    .forEach((line) => {
+      const [key, ...rawValueParts] = line.split('=');
+      const value = rawValueParts.join('=').trim();
+
+      if (!key || !value) {
+        return;
+      }
+
+      const normalizedKey = key.trim();
+
+      if (!(normalizedKey in process.env)) {
+        process.env[normalizedKey] = value.replace(/^['"]|['"]$/g, '');
+      }
+    });
+}
 
 const app = express();
 const PORT = process.env.PORT || 3001;
