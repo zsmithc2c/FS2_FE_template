@@ -23,6 +23,12 @@
   margin: 20px;
 }
 
+#card-container .featured-message {
+  margin: auto;
+  padding: 40px 20px;
+  font-size: 1.1rem;
+}
+
 #gallery-head {
   background: black;
   margin-top: -5px;
