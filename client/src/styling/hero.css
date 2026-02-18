@@ -1,31 +1,48 @@
 #hero {
   width: 100%;
-  height: 50vh; /* changed the height of the hero */
-  background-color: #f2f2f2;
+  height: 50vh; 
+  /* Replace the color with an image */
+  background: url("https://t3.ftcdn.net/jpg/06/23/25/74/360_F_623257407_BGCGQwfFn2cW7n8rEUmg4PMEEDS3SXnJ.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  
+  /* This ensures the image doesn't have a white border */
+  margin: 0; 
 }
 
 #hero-promo {
   font-size: 3em;
   font-weight: bold;
-  color: #333;
+  color: #ffffff; /* I changed this to white to stand out against the blue */
   text-align: center;
   padding: 20px;
   margin: 20px 0;
-  background-color: #6d87a2; /* added background color */
+  background-color: rgba(109, 135, 162, 0.9); /* Added a tiny bit of transparency */
   border: 2px solid #000000;
   width: 90%;
+  box-shadow: 0px 4px 15px rgba(0,0,0,0.3); /* Adds depth */
 }
 
 #hero-text {
-  font-size: 1.2em;
-  color: #555;
+  /* This makes the "simple and sophisticated" part stand out */
+  font-size: 1.5rem; 
+  font-weight: 600;
+  color: #FFFFFF;
+  
   text-align: center;
-  width: 80%;
+  width: 85%;
   margin: 0 auto;
-  padding-top: 20px;
+  padding-top: 30px;
+  
+  /* Adds space between the lines so it looks clean */
+  line-height: 1.4;
+  
+  /* Adds a touch of class to the spacing */
+  letter-spacing: 0.5px;
 }
-
