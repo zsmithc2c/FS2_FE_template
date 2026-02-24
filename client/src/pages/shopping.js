@@ -1,8 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
-import Product from "../components/product";
-
-const API = process.env.REACT_APP_API_BASE_URL || "http://localhost:3001";
 
 const PAGE_PRODUCTS = "products";
 const PAGE_CART = "cart";
@@ -11,28 +8,17 @@ const Shopping = (props) => {
   const { searchTerm } = props;
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [cartList, setCartList] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(PAGE_PRODUCTS);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const { data } = await axios.get(`${API}/api/ecommerce/products`);
-        setProducts(data);
-        setFilteredProducts(data);
-        setError(null);
-      } catch (err) {
-        console.error(err);
-        setError("Unable to load products. Please try again later.");
-      } finally {
-        setProductsLoading(false);
-      }
-    };
-
-    fetchProducts();
+    axios
+      .get(`http://localhost:3001/api/ecommerce/products`)
+      .then((res) => {
+        console.log("data:", res.data);
+        setProducts(res.data);
+      })
+      .catch((err) => console.log(err));
   }, []);
 
   useEffect(() => {
@@ -44,67 +30,38 @@ const Shopping = (props) => {
   }, [products, searchTerm]);
 
   useEffect(() => {
-    axios
-      .get(`${API}/api/ecommerce/cart`)
-      .then((res) => setCartList(res.data))
-      .catch((err) => console.error("Unable to load cart:", err))
-      .finally(() => setLoading(false));
+    const cartData = localStorage.getItem("cart");
+    if (cartData) {
+      setCartList(JSON.parse(cartData));
+    }
   }, []);
 
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartList));
+  }, [cartList]);
+
   const addToCart = (product) => {
-    axios
-      .post(`${API}/api/ecommerce/cart`, {
-        product,
+    axios.post("http://localhost:3001/api/ecommerce/cart", { product })
+      .then((res) => {
+        setCartList([...cartList, { ...product }]);
       })
-      .then(() => {
-        setCartList((prevCart) => [...prevCart, product]);
-      })
-      .catch((err) => {
-        console.error("Unable to add to cart:", err);
-      });
+      .catch((err) => console.log(err));
   };
 
-  const removeFromCart = (id) => {
+  const removeFromCart = (productId) => {
     axios
-      .delete(`${API}/api/ecommerce/cart/${id}`)
-      .then(() => {
-        setCartList((prevCart) =>
-          prevCart.filter((item) => String(item.id) !== String(id))
-        );
+      .delete(`http://localhost:3001/api/ecommerce/cart/${productId}`)
+      .then((res) => {
+        setCartList(cartList.filter((item) => item.id !== productId));
       })
-      .catch((err) => {
-        console.error("Unable to remove from cart:", err);
-      });
+      .catch((err) => console.log(err));
   };
 
   const navigateTo = (nextPage) => {
     setPage(nextPage);
   };
 
-  const currencyFormatter = new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
-  });
-
-  const formatPrice = (price) => {
-    if (price === null || price === undefined) {
-      return "";
-    }
-
-    return typeof price === "number" ? currencyFormatter.format(price) : price;
-  };
-
-  const renderProducts = () =>
-    filteredProducts.map((product) => (
-      <Product
-        key={product.id}
-        product={product}
-        addToCart={addToCart}
-      />
-    ));
-
-  const renderProductPage = () => (
+  const renderProducts = () => (
     <>
       <header id="shopping-head">
         <button onClick={() => navigateTo(PAGE_CART)} id="goToCart">
@@ -112,14 +69,15 @@ const Shopping = (props) => {
         </button>
       </header>
       <div id="shopping">
-        {productsLoading && <p>Loading products...</p>}
-        {error && <p>{error}</p>}
-        {!productsLoading && !error && filteredProducts.length === 0 && (
-          <p>No products available at the moment.</p>
-        )}
-        {!productsLoading && !error && filteredProducts.length > 0 && (
-          renderProducts()
-        )}
+        {filteredProducts.map((product) => (
+          <div key={product.id} id="product">
+            <img id="img" src={product.image_url} alt="" />
+            <h2>{product.name}</h2>
+            <h3>{product.description}</h3>
+            <h3>{product.price}</h3>
+            <button onClick={() => addToCart(product)}>Add to Cart</button>
+          </div>
+        ))}
       </div>
     </>
   );
@@ -130,20 +88,14 @@ const Shopping = (props) => {
         <button onClick={() => navigateTo(PAGE_PRODUCTS)} id="products-btn">
           Back to Products
         </button>
-
         <h1 id="cart-title"> Cart </h1>
-
-        {cartList.length === 0 && <p>Your cart is empty.</p>}
-
         {cartList.map((product) => (
           <div className="card card-container" key={product.id}>
             <div id="product">
-              {product.image_url && (
-                <img src={product.image_url} alt={product.name || "Product"} />
-              )}
+              <img src={product.image_url} alt="" />
               <h2> {product.name} </h2>
               <h3> {product.description} </h3>
-              <h3> {formatPrice(product.price)} </h3>
+              <h3> {product.price} </h3>
               <button onClick={() => removeFromCart(product.id)}>
                 Remove from Cart
               </button>
@@ -154,11 +106,10 @@ const Shopping = (props) => {
     </>
   );
 
-  if (loading) return <div>Loading...</div>;
-
   return (
     <div className="main">
-      {page === PAGE_PRODUCTS ? renderProductPage() : renderCart()}
+      {renderProducts()}
+      {page === PAGE_CART && renderCart()}
     </div>
   );
 };

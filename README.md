@@ -1,328 +1,242 @@
-# Lesson 10: Product Database
+# Full Stack 2: Lesson 13 — Adding Search Functionality
 
-Welcome to the template repository for Lesson 10. In this lesson you will stand up a simple ecommerce catalog by creating a `products` table in MySQL, exposing the rows through the Express API, and rendering the results inside the React frontend.
+## Lesson Overview
 
-**Lesson objectives:**
-- Design the `products` schema and load sample inventory data into MySQL.
-- Verify the Express server can read from MySQL and serve `GET /api/ecommerce/products`.
-- Update the React UI to request and display the catalog data returned by the backend.
+In this lesson, students learn how to create a search function for their products page using `useState` and GET requests, use MySQL `SELECT` statements with the `LIKE` operator to filter data from a database table, and display a list of relevant products to the user.
 
-## Folder Layout
-- **`client/`** – React frontend that renders the product catalog and interacts with the API.
-- **`server/`** – Node/Express backend that exposes routes such as `GET /api/ecommerce/products` and communicates with the database.
-- **`docs/CRA_REFERENCE.md`** – Archived Create React App reference documentation from the original scaffold.
+### Learning Objectives
 
-> If you are missing the `server/` folder locally, create it with the lesson starter code or pull the latest changes from your instructor's branch.
+- Create a search function for the products page using `useState` and GET requests
+- Use MySQL `SELECT` statements to select specific data from a data table
+- Display a list of relevant products to the user
 
----
+### Prerequisites
 
-## Getting Started in VS Code
+Before starting this lesson, students should be comfortable with:
 
-1. Open **VS Code**.
-2. Press **Ctrl + Shift + P** (or **Cmd + Shift + P** on Mac).
-3. Choose **Git: Clone**.
-4. Paste your repository URL and choose a local folder.
-5. Once the project opens, click **“Open in new window”** if prompted.
+- `useState` and `useEffect` hooks in React
+- Passing props between components
+- MySQL `SELECT` statements
 
 ---
 
-## Prerequisites
+## Project Structure
 
-Make sure you have these installed before starting:
-- **Node.js 18 LTS or newer** (includes `npm`)
-- **MySQL Server** (for your local database)
-- **MySQL Workbench** *(optional)* – to manage your schema and tables visually
+This is a full-stack ecommerce application with a **React frontend** and a **Node/Express backend** connected to a **MySQL database**.
+
+```
+├── client/                  # React frontend
+│   ├── src/
+│   │   ├── components/      # Reusable UI components
+│   │   │   ├── nav.jsx      # Navigation bar with search input
+│   │   │   ├── footer.jsx   # Footer component
+│   │   │   ├── hero.jsx     # Hero/banner section
+│   │   │   ├── featured.jsx # Featured products gallery
+│   │   │   ├── contactForm.jsx # Contact form component
+│   │   │   └── index.js     # Component exports
+│   │   ├── pages/           # Page-level components
+│   │   │   ├── home.js
+│   │   │   ├── shopping.js  # Products page with search filtering
+│   │   │   ├── about.js
+│   │   │   ├── contact.js
+│   │   │   ├── account.js
+│   │   │   └── cart.js
+│   │   ├── styling/         # CSS files for each component/page
+│   │   ├── images/          # Static image assets
+│   │   └── App.js           # Main app with routing and search state
+│   └── package.json
+├── server/                  # Node/Express backend
+│   ├── index.js             # API endpoints and MySQL connection
+│   └── package.json
+└── README.md
+```
 
 ---
 
-## Install & Run
+## How the Search Feature Works
 
-Before launching either app, confirm the `products` table exists and contains data (see [Products Table SQL & Sample Data](#products-table-sql--sample-data)). The React frontend now depends on the backend route `GET /api/ecommerce/products` to populate the catalog view.
+The search functionality is the core feature of this lesson. Here's how it flows through the application:
 
-### Step 1: Start the Server
+### 1. State Management in App.js (Section 1.1)
+
+Search state is created at the top level of the app using the `useState` hook:
+
+```jsx
+const [searchTerm, setSearchTerm] = useState("");
+```
+
+This state is "lifted up" to `App.js` because **two sibling components** need access to it — the `NavBar` (where the user types) and the `Shopping` page (where results are filtered). By keeping state in the parent, both children can share the same data.
+
+### 2. Passing Props (Section 1.2)
+
+The `searchTerm` and `setSearchTerm` are passed down as **props**:
+
+- **To NavBar:** Both `searchTerm` (to display the current value) and `setSearchTerm` (to update it when the user types)
+- **To Shopping:** Just `searchTerm` (to filter the displayed products)
+
+```jsx
+<NavBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
+<Route path="/shopping" element={<Shopping searchTerm={searchTerm} />} />
+```
+
+In React, "props" is short for "properties" — they are used to pass data from a parent component to a child component, similar to HTML attributes.
+
+### 3. Search Input in NavBar (Section 1.2)
+
+The NavBar component receives the props and wires them to an `<input>` element:
+
+```jsx
+const { searchTerm, setSearchTerm } = props;
+
+const handleInputChange = (e) => {
+  setSearchTerm(e.target.value);
+};
+```
+
+Every keystroke calls `setSearchTerm`, which updates the state in `App.js`, which re-renders both `NavBar` and `Shopping` with the new value.
+
+### 4. Filtering Products on the Frontend (Section 1.3)
+
+In the `Shopping` component, a `useEffect` hook watches for changes to either `products` or `searchTerm` and updates a `filteredProducts` array:
+
+```jsx
+const [filteredProducts, setFilteredProducts] = useState([]);
+
+useEffect(() => {
+  setFilteredProducts(
+    products.filter((product) =>
+      product.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+  );
+}, [products, searchTerm]);
+```
+
+Key concepts here:
+- **`useEffect` dependency array** `[products, searchTerm]` — the effect re-runs whenever either value changes
+- **`.filter()`** — creates a new array containing only products whose name matches
+- **`.toLowerCase()`** — makes the search case-insensitive
+- **`.includes()`** — checks if the product name contains the search term (partial match)
+
+The `renderProducts` function then maps over `filteredProducts` instead of `products` to display only matching items.
+
+### 5. Server-Side Search with MySQL LIKE (Section 2.1)
+
+The Express backend also supports search via a query parameter:
+
+```js
+app.get("/api/ecommerce/products", (req, res) => {
+  const searchTerm = req.query.search || '';
+  const sql = `SELECT * FROM products WHERE name LIKE ?`;
+  const values = [`%${searchTerm}%`];
+  db.query(sql, values, (err, result) => {
+    res.json(result);
+  });
+});
+```
+
+Key concepts:
+- **`req.query.search`** — extracts the `?search=` parameter from the URL (e.g., `/api/ecommerce/products?search=shirt`)
+- **`|| ''`** — defaults to an empty string if no search term is provided (returns all products)
+- **MySQL `LIKE` operator** — filters rows where the column matches a pattern
+- **`%` wildcards** — `%searchTerm%` means "anything before, the search term, then anything after" (partial match)
+- **Parameterized query (`?`)** — prevents SQL injection by using prepared statements
+
+---
+
+## Additional Features
+
+### Shopping Cart
+- **Add to cart:** POST request to `/api/ecommerce/cart` saves the product to the database and updates local state
+- **Remove from cart:** DELETE request to `/api/ecommerce/cart/:id` removes the product
+- **Persistence:** Cart data is also stored in `localStorage` for client-side persistence
+
+### Contact Form
+- Collects first name, last name, email, and message
+- Submits via POST to `/submit-form`, which inserts into the `contact` MySQL table
+
+### Navigation
+- Uses `react-router-dom` for client-side routing between Home, Shopping, About, Contact, and Account pages
+
+---
+
+## Setup & Installation
+
+### Prerequisites
+- Node.js (v16+)
+- MySQL running locally
+
+### Database Setup
+
+Create the MySQL database and tables:
+
+```sql
+CREATE DATABASE ecommerce;
+USE ecommerce;
+
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  image_url VARCHAR(255),
+  price DECIMAL(10, 2)
+);
+
+CREATE TABLE cart (
+  id INT NOT NULL,
+  name VARCHAR(255),
+  description TEXT,
+  image_url VARCHAR(255),
+  price DECIMAL(10, 2)
+);
+
+CREATE TABLE contact (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  First_Name VARCHAR(255),
+  Last_Name VARCHAR(255),
+  Email VARCHAR(255),
+  Message TEXT
+);
+
+-- Insert some sample products
+INSERT INTO products (name, description, image_url, price) VALUES
+('Blue T-Shirt', 'A comfortable blue t-shirt', 'https://via.placeholder.com/150', 19.99),
+('Red Sneakers', 'Stylish red sneakers', 'https://via.placeholder.com/150', 59.99),
+('Black Hoodie', 'Warm black hoodie', 'https://via.placeholder.com/150', 39.99),
+('White Cap', 'Classic white baseball cap', 'https://via.placeholder.com/150', 14.99),
+('Green Jacket', 'Lightweight green jacket', 'https://via.placeholder.com/150', 79.99);
+```
+
+### Running the App
+
+**1. Update MySQL credentials** in `server/index.js` if your MySQL user/password differ from `root`/`password`.
+
+**2. Install dependencies and start the server:**
 ```bash
 cd server
 npm install
-# Ensure mysql2 is installed for database connectivity
-npm install mysql2
-npm run dev
+npm run devStart
 ```
-This runs the Express server with `nodemon` on **http://localhost:3001**.
 
-### Step 2: Start the Client
+**3. Install dependencies and start the client:**
 ```bash
 cd client
 npm install
 npm start
 ```
-This launches the React app on **http://localhost:3000**. Once the products data is seeded, keep both the client and server running so the UI can load `/api/ecommerce/products` successfully.
+
+The client runs on `http://localhost:3000` and the server on `http://localhost:3001`.
 
 ---
 
-## Environment Variables
+## Key Vocabulary
 
-This project already uses `.env` files directly — no `.env.example` required.
-
-### In `server/.env`
-Update this file to match your local MySQL setup:
-```env
-DB_HOST=127.0.0.1
-DB_USER=root
-DB_PASSWORD=your_password
-DB_NAME=ecommerce
-PORT=3001
-```
-
-### In `client/.env`
-Make sure your frontend knows where to find your backend:
-```env
-REACT_APP_API_BASE_URL=http://localhost:3001
-```
-
----
-
-## Lesson 10 TODOs
-
-You’ll complete these steps throughout the lesson. They mirror the sections outlined in your curriculum.
-
-| Lesson Section | Goal |
-|-----------------|------|
-| **1.1 / 1.2** | Confirm folder structure, seed the products data, and keep both the client and server running. |
-| **2.2** | Create a MySQL database and a `products` table (either through the UI or using SQL). |
-| **2.3** | Connect the backend to the database and expose a `/api/ecommerce/products` GET route. |
-| **2.4** | Render the product catalog in React using the data returned from the API. |
-
----
-
-## Section 2.2 – Create the Database and Table
-
-You may have already created this during setup. If not, here’s how:
-
-### Option 1 – MySQL Workbench (UI)
-1. Open MySQL Workbench.
-2. Create a new schema named **`ecommerce`**.
-3. In that schema, create a table named **`products`** with the following columns:
-   - id (INT, AUTO_INCREMENT, PRIMARY KEY)
-   - name (VARCHAR(150), NOT NULL)
-   - description (TEXT, NULL)
-   - price (DECIMAL(10,2), NOT NULL)
-   - sku (VARCHAR(50), NOT NULL)
-   - image_url (VARCHAR(255), NULL)
-   - created_at (TIMESTAMP, defaults to CURRENT_TIMESTAMP)
-
-### Option 2 – Run SQL Commands
-If you prefer, use this SQL to create everything manually:
-```sql
-CREATE DATABASE IF NOT EXISTS ecommerce;
-
-USE ecommerce;
-
-CREATE TABLE IF NOT EXISTS products (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
-  description TEXT,
-  price DECIMAL(10,2) NOT NULL,
-  sku VARCHAR(50) NOT NULL,
-  image_url VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-#### Products Table SQL & Sample Data
-
-Paste the block below into MySQL Workbench or the MySQL CLI to create the table and seed it with starter rows you can query immediately:
-
-```sql
-USE ecommerce;
-
-CREATE TABLE IF NOT EXISTS products (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(150) NOT NULL,
-  description TEXT,
-  price DECIMAL(10,2) NOT NULL,
-  sku VARCHAR(50) NOT NULL,
-  image_url VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-INSERT INTO products (name, description, price, sku, image_url) VALUES
-  ('Wireless Headphones', 'Noise-cancelling over-ear headphones with 30 hours of battery life.', 99.99, 'WH-001', 'https://picsum.photos/id/180/600/400'),
-  ('Smart Watch', 'Water-resistant watch with heart-rate monitoring and GPS tracking.', 149.50, 'SW-201', 'https://picsum.photos/id/1050/600/400'),
-  ('Travel Backpack', '35L backpack with laptop sleeve and weather-resistant fabric.', 84.00, 'TB-410', 'https://picsum.photos/id/1011/600/400'),
-  ('Ceramic Mug', '12oz handcrafted mug that is microwave and dishwasher safe.', 18.75, 'CM-009', 'https://picsum.photos/id/443/600/400'),
-  ('Bluetooth Speaker', 'Portable speaker with rich bass and 10 hours of play time.', 59.99, 'BS-550', 'https://picsum.photos/id/1080/600/400');
-```
-
----
-
-## Section 2.3 – Connect to the Database and Add the Products Route
-
-Open **`server/index.js`** and confirm it connects to MySQL with `mysql2` and exposes a GET endpoint that reads from the `products` table:
-
-```js
-const express = require('express');
-const cors = require('cors');
-const mysql = require('mysql2'); // ✅ use mysql2
-
-const app = express();
-const PORT = process.env.PORT || 3001;
-
-app.use(cors());
-app.use(express.json());
-
-// ✅ Connect to your MySQL database
-const db = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-});
-
-// ✅ Read products for the frontend catalog
-app.get('/api/ecommerce/products', (req, res) => {
-  const sql = `
-    SELECT id, name, description, price, sku, image_url
-    FROM products
-    ORDER BY name ASC
-  `;
-
-  db.query(sql, (err, results) => {
-    if (err) {
-      console.error('DB query error:', err);
-      return res.status(500).json({ message: 'Unable to load products.' });
-    }
-
-    return res.status(200).json(results);
-  });
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server is running on port ${PORT}`);
-});
-
----
-
-## Lesson 12: Cart Feature
-
-Lesson 12 builds on the catalog experience by introducing a persistent shopping cart that is backed by MySQL and synchronized with the frontend.
-
-### Database Update
-
-- Create a `cart` table to store the items a shopper adds to their cart:
-
-  ```sql
-  CREATE TABLE cart (
-    id INT PRIMARY KEY,
-    name VARCHAR(255),
-    description TEXT,
-    image_url VARCHAR(255),
-    price DECIMAL(10,2)
-  );
-  ```
-
-  This schema mirrors the product information needed to render the cart view.
-
-### API Changes
-
-- `POST /api/ecommerce/cart` – accepts a `product` object in the request body and inserts it into the `cart` table.
-- `DELETE /api/ecommerce/cart/:id` – removes the matching product from the `cart` table.
-
-### Frontend Changes
-
-- The **Shopping** page now:
-  - Initializes `cartList` state from `localStorage` and persists changes back to `localStorage`.
-  - Sends `POST` requests when adding products and `DELETE` requests when removing products from the cart.
-  - Renders a cart view with "Remove from Cart" buttons and a "Back to Products" navigation option.
-
-### Testing
-
-1. Start the Express server and React client.
-2. Browse to the shopping page and click **Add to Cart** on any product.
-3. Open the cart view to confirm the product appears.
-4. Click **Remove from Cart** to verify the item is deleted.
-
-With these updates in place, the lesson 12 branch reflects the state students should have at the end of the exercise.
-
----
-
-## Section 2.4 – Connect the React Catalog View
-
-Open **`client/src`** and locate the component or page that renders the product list (for example, `pages/products.jsx`). Add a hook that requests the products endpoint when the component mounts and stores the response in state:
-
-```jsx
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-
-const ProductsPage = () => {
-  const [products, setProducts] = useState([]);
-  const [status, setStatus] = useState('loading');
-
-  useEffect(() => {
-    axios
-      .get(`${process.env.REACT_APP_API_BASE_URL}/api/ecommerce/products`)
-      .then(({ data }) => {
-        setProducts(data);
-        setStatus('ready');
-      })
-      .catch(() => setStatus('error'));
-  }, []);
-
-  if (status === 'loading') {
-    return <p>Loading products…</p>;
-  }
-
-  if (status === 'error') {
-    return <p>We could not load the catalog. Try refreshing once the server is running.</p>;
-  }
-
-  return (
-    <section className="product-grid">
-      {products.map((product) => (
-        <article key={product.id} className="product-card">
-          {product.image_url && (
-            <img src={product.image_url} alt={product.name} />
-          )}
-          <h2>{product.name}</h2>
-          <p>{product.description}</p>
-          <p className="price">${product.price}</p>
-          <small>SKU: {product.sku}</small>
-        </article>
-      ))}
-    </section>
-  );
-};
-```
-
-Then:
-1. Start both apps (`npm run dev` in `server`, `npm start` in `client`) after seeding the database.
-2. Visit your product catalog page to confirm the list renders.
-3. Check MySQL → `ecommerce.products` to verify the API is returning the rows you expect.
-
----
-
-## Lesson 10 Alignment
-
-| Lesson Section | Description |
-|----------------|--------------|
-| **Lesson 10: Product Database Kickoff / Do Now** | Locate your FS1 project or use this template. |
-| **Section 1.1: File Setup** | Set up `client` and `server` folders. |
-| **Section 1.2: Moving Files** | Seed the products table and verify both apps run. |
-| **Section 2.1: Features that Need a Database** | Identify catalog features that read product data. |
-| **Section 2.2: Product Table** | Create and populate the `products` table in MySQL. |
-| **Section 2.3: Connect the Database** | Implement the backend `GET /api/ecommerce/products` route with `mysql2`. |
-| **Section 2.4: Rendering Data** | Fetch the products in React and render the catalog UI. |
-
----
-
-## Verification Steps
-
-✅ `npm run dev` in `server` → runs on port 3001
-✅ `npm start` in `client` → loads on port 3000
-✅ `GET /api/ecommerce/products` → returns seeded rows in Postman or the browser
-✅ Catalog page renders products from the API response
-
----
-
-## Additional Resources
-- [`docs/CRA_REFERENCE.md`](docs/CRA_REFERENCE.md) – Original Create React App documentation
-- Check your LMS or instructor notes for any lesson-specific MySQL credentials or example screenshots.
+| Term | Definition |
+|------|-----------|
+| **useState** | A React hook that creates a state variable and a function to update it |
+| **useEffect** | A React hook that runs side effects (like API calls or filtering) when dependencies change |
+| **Props** | Short for "properties" — used to pass data from parent to child components |
+| **LIKE operator** | A MySQL operator that filters rows based on a pattern (used with `%` wildcards) |
+| **Query parameter** | Data appended to a URL after `?` (e.g., `?search=shirt`), accessed via `req.query` in Express |
+| **Parameterized query** | A SQL query that uses `?` placeholders to safely insert values and prevent SQL injection |
+| **filter()** | A JavaScript array method that returns a new array with only elements that pass a test |
+| **includes()** | A JavaScript string method that checks whether a string contains a specified substring |
