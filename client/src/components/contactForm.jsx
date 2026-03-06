@@ -1,84 +1,63 @@
-import React, { useState } from "react";
-import axios from "axios";
+import React from 'react';
 
-const ContactForm = () => {
-  // Lesson 9 TODO: Step 1 – Collect the form data in component state so it can be sent to your server.
-  const [formData, setFormData] = useState({
-    firstname: "",
-    lastname: "",
-    email: "",
-    subject: "",
-  });
-
-  // Lesson 9 TODO: Step 2 – Send this data to your Express endpoint once it's implemented.
-  // Lesson 9 TODO: Step 3 – Handle both success and failure responses from the server.
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    axios
-      // Reminder: set REACT_APP_API_BASE_URL in your .env once your Express server is up.
-      .post(`${process.env.REACT_APP_API_BASE_URL}/submit-form`, formData)
-      .then((response) => {
-        console.log(response.data);
-        // TODO: replace this console.log with user feedback once the POST route is working.
-      })
-      .catch((error) => {
-        console.log(error);
-        // TODO: surface an error message to the user once the POST route is working.
-      });
-  };
-
-  const handleInputChange = (event) => {
-    const { name, value } = event.target;
-    setFormData((prevFormData) => ({ ...prevFormData, [name]: value }));
-  };
-
+const Contact = () => {
   return (
-    <div id="contact">
-      <form onSubmit={handleSubmit}>
-        <label htmlFor="fname">First Name</label>
-        <input
-          type="text"
-          className="name"
-          id="fname"
-          name="firstname"
-          placeholder="Your name.."
-          value={formData.firstname}
-          onChange={handleInputChange}
-        />
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', // Centers everything horizontally
+      justifyContent: 'center', 
+      minHeight: '80vh', 
+      padding: '20px' 
+    }}>
+      <div style={{ 
+        width: '100%', 
+        maxWidth: '500px', // Prevents the content from stretching too far
+        backgroundColor: '#f9f9f9', 
+        padding: '40px', 
+        borderRadius: '10px',
+        boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+        textAlign: 'center'
+      }}>
+        <h2 style={{ marginBottom: '20px' }}>Contact Us</h2>
+        <p style={{ color: '#666', marginBottom: '30px' }}>
+          Have questions? We'd love to hear from you.
+        </p>
 
-        <label htmlFor="lname">Last Name</label>
-        <input
-          type="text"
-          className="name"
-          id="lname"
-          name="lastname"
-          placeholder="Your last name.."
-          value={formData.lastname}
-          onChange={handleInputChange}
-        />
-
-        <label htmlFor="email">Email Address</label>
-        <textarea
-          id="email"
-          name="email"
-          placeholder="Please leave an email address where we can reach you"
-          value={formData.email}
-          onChange={handleInputChange}
-        />
-
-        <label htmlFor="subject">Subject</label>
-        <textarea
-          id="subject"
-          name="subject"
-          placeholder="Write something.."
-          value={formData.subject}
-          onChange={handleInputChange}
-        />
-
-        <button type="submit">Submit</button>
-      </form>
+        <form style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+          <input 
+            type="text" 
+            placeholder="Name" 
+            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc' }} 
+          />
+          <input 
+            type="email" 
+            placeholder="Email" 
+            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc' }} 
+          />
+          <textarea 
+            placeholder="Message" 
+            rows="5" 
+            style={{ padding: '12px', borderRadius: '5px', border: '1px solid #ccc' }} 
+          />
+          <button 
+            type="submit" 
+            style={{ 
+              padding: '12px', 
+              backgroundColor: '#333', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '5px', 
+              cursor: 'pointer',
+              marginTop: '10px'
+            }}
+          >
+            Send Message
+          </button>
+        </form>
+      </div>
     </div>
   );
 };
 
-export default ContactForm;
+export default Contact;
