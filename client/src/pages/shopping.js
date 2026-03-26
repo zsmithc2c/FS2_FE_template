@@ -1,145 +1,52 @@
-import React, { useState } from "react";
-import NavBar from "../components/nav";
-import productImg from "../images/productImg.png";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 
-const PAGE_PRODUCTS = "products";
-const PAGE_CART = "cart";
+const Shopping = ({ addToCart, activeSearch }) => {
+  const [products, setProducts] = useState([]);
 
-const Shopping = () => {
-  const [cartList, setCartList] = useState([]);
-  const [page, setPage] = useState(PAGE_PRODUCTS);
-
-  const [products] = useState([
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-    {
-      image: productImg,
-      name: "Product Title",
-      description: "A description of the product",
-      price: "Price"
-    },
-  ]);
-
-  const addToCart = (product) => {
-    setCartList([...cartList, product]);
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get(`http://localhost:3001/api/ecommerce/products?search=${activeSearch}`);
+      setProducts(response.data);
+    } catch (error) {
+      console.error("Error fetching products:", error);
+    }
   };
 
-  const navigateTo = (nextPage) => {
-    setPage(nextPage);
-  };
-
-  const renderProducts = () => (
-    <>
-      <header id="shopping-head">
-        <button onClick={() => navigateTo(PAGE_CART)} id="goToCart">
-          Go to Cart ({cartList.length})
-        </button>
-      </header>
-      <div id="shopping">
-        {products.map((product, idx) => (
-          <div className="card" key={idx}>
-            <div id="product">
-              <img src={product.image} alt="" />
-              <h2> {product.name} </h2>
-              <h3> {product.description} </h3>
-              <h3> {product.price} </h3>
-              <button onClick={() => addToCart(product)}> Add to Cart </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </>
-  );
-
-  const renderCart = () => (
-    <>
-      <div id="cart-container">
-        <button onClick={() => navigateTo(PAGE_PRODUCTS)} id="products-btn">
-          Back to Products
-        </button>
-
-        <h1 id="cart-title"> Cart </h1>
-
-        {cartList.map((product, idx) => (
-          <div className="card card-container" key={idx}>
-            <div id="product">
-              <img src={product.image} alt="" />
-              <h2> {product.name} </h2>
-              <h3> {product.description} </h3>
-              <h3> {product.price} </h3>
-            </div>
-          </div>
-        ))}
-        <button id="checkout-btn">Checkout</button>
-      </div>
-    </>
-  );
+  // Only triggers when the search button is clicked in the NavBar
+  useEffect(() => {
+    fetchProducts();
+  }, [activeSearch]);
 
   return (
-    <div className="main">
-      {renderProducts()}
-      {page === PAGE_CART && renderCart()}
-      <NavBar length={cartList.length} />
+    <div style={{ padding: "120px 20px", textAlign: "center" }}>
+      <h1 style={{ color: "black", marginBottom: "30px" }}>Luxury Collection</h1>
+      
+      <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "30px" }}>
+        {products.map((product) => (
+          <div key={product.id} style={cardStyle}>
+            <img src={product.image} alt={product.name} style={imgStyle} />
+            <h2 style={{ color: "black", fontSize: "1.2rem" }}>{product.name}</h2>
+            <p style={{ color: "#666", fontSize: "0.9rem" }}>{product.description}</p>
+            <h3 style={{ color: "black" }}>
+              ${Number(product.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </h3>
+            <button 
+              onClick={() => addToCart(product)} 
+              style={btnStyle}
+            >
+              Add to Cart
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
+
+// Styles
+const cardStyle = { backgroundColor: "white", padding: "20px", borderRadius: "15px", width: "260px", boxShadow: "0 10px 25px rgba(0,0,0,0.3)" };
+const imgStyle = { width: "100%", height: "200px", objectFit: "cover", borderRadius: "10px", marginBottom: "15px" };
+const btnStyle = { width: "100%", padding: "12px", backgroundColor: "black", color: "white", border: "none", borderRadius: "8px", cursor: "pointer", fontWeight: "bold", marginTop: "10px" };
 
 export default Shopping;

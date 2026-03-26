@@ -1,12 +1,20 @@
 #contact-page {
-  background: url("https://images.unsplash.com/photo-1434715961933-4cbf3d79230f?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=1744&q=80");
+  /* The Image Address */
+  background-image: url("https://img.freepik.com/premium-vector/modern-simple-background-minimalist-lanscape-background-luxury-modern-black-gold-vector-background_609989-373.jpg");
+  
+  /* The Fixes */
   background-repeat: no-repeat;
+  background-size: cover;      /* This forces the image to fill the entire box */
+  background-position: center;  /* This keeps the gold lines centered */
+  background-attachment: fixed; /* This keeps the background from moving when you scroll */
+  
+  /* Your Original Sizing */
   height: 140vh;
   width: 100vw;
 }
 
 #contact {
-  position: absolute;
+  position: relative;
   top: 80px;
   margin-top: 30px;
   margin-left: 20px;
